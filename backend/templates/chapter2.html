@@ -1,0 +1,220 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<section class="chapter-page">
+
+    <div class="chapter-header">
+
+        <h1>
+            Capítulo 2
+        </h1>
+
+        <p>
+            Métodos iterativos para solución de sistemas lineales.
+        </p>
+
+    </div>
+
+    <div class="chapter-grid">
+
+        <!-- PANEL IZQUIERDO -->
+
+        <div class="control-panel">
+
+            <h2>
+                Configuración
+            </h2>
+
+            <!-- MÉTODO -->
+
+            <div class="input-group">
+
+                <label>Método</label>
+
+                <select>
+                    <option>Jacobi</option>
+                    <option>Gauss-Seidel</option>
+                    <option>SOR</option>
+                </select>
+
+            </div>
+
+            <!-- TAMAÑO MATRIZ -->
+
+            <div class="input-group">
+
+                <label>Tamaño de matriz</label>
+
+                <select>
+                    <option>2x2</option>
+                    <option>3x3</option>
+                    <option>4x4</option>
+                    <option>5x5</option>
+                    <option>6x6</option>
+                    <option>7x7</option>
+                    <option>8x8</option>
+                </select>
+
+            </div>
+
+            <!-- MATRIZ -->
+
+            <div class="input-group">
+
+                <label>Matriz A</label>
+
+                <div class="matrix-placeholder">
+                    Espacio para matriz dinámica
+                </div>
+
+            </div>
+
+            <!-- VECTOR -->
+
+            <div class="input-group">
+
+                <label>Vector b</label>
+
+                <div class="matrix-placeholder">
+                    Espacio para vector
+                </div>
+
+            </div>
+
+            <!-- TOLERANCIA -->
+
+            <div class="input-group">
+
+                <label>Tolerancia</label>
+
+                <input
+                    type="number"
+                    placeholder="0.0001"
+                >
+
+            </div>
+
+            <!-- ITERACIONES -->
+
+            <div class="input-group">
+
+                <label>Máx Iteraciones</label>
+
+                <input
+                    type="number"
+                    placeholder="100"
+                >
+
+            </div>
+
+            <!-- SOR -->
+
+            <div class="input-group">
+
+                <label>Omega (SOR)</label>
+
+                <input
+                    type="number"
+                    placeholder="1.1"
+                >
+
+            </div>
+
+            <button class="solve-btn">
+                Resolver Sistema
+            </button>
+
+        </div>
+
+        <!-- PANEL DERECHO -->
+
+        <div class="results-panel">
+
+            <!-- TABLA -->
+
+            <div class="result-card">
+
+                <h2>
+                    Tabla de Iteraciones
+                </h2>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Iter</th>
+                            <th>x₁</th>
+                            <th>x₂</th>
+                            <th>Error</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>1</td>
+                            <td>0.8</td>
+                            <td>1.2</td>
+                            <td>0.25</td>
+                        </tr>
+
+                        <tr>
+                            <td>2</td>
+                            <td>0.95</td>
+                            <td>1.05</td>
+                            <td>0.04</td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- CONVERGENCIA -->
+
+            <div class="result-card">
+
+                <h2>
+                    Análisis de Convergencia
+                </h2>
+
+                <div class="analysis-box">
+
+                    <p>
+                        Radio espectral:
+                        <strong>0.82</strong>
+                    </p>
+
+                    <p class="success-text">
+                        El método converge correctamente.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- GRÁFICA -->
+
+            <div class="result-card graph-card">
+
+                <h2>
+                    Comparación de Error
+                </h2>
+
+                <div class="graph-placeholder">
+                    Área de gráfica
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

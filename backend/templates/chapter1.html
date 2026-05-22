@@ -1,0 +1,193 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<section class="chapter-page">
+
+    <div class="chapter-header">
+
+        <h1>
+            Capítulo 1
+        </h1>
+
+        <p>
+            Métodos iterativos para aproximación de raíces.
+        </p>
+
+    </div>
+
+    <div class="chapter-grid">
+
+        <!-- PANEL IZQUIERDO -->
+
+        <div class="control-panel">
+
+            <h2>
+                Configuración
+            </h2>
+
+            <!-- MÉTODO -->
+
+            <div class="input-group">
+
+                <label>Método</label>
+
+                <select>
+
+                    <option>Bisección</option>
+                    <option>Regla falsa</option>
+                    <option>Punto fijo</option>
+                    <option>Newton</option>
+                    <option>Secante</option>
+                    <option>Raíces múltiples</option>
+
+                </select>
+
+            </div>
+
+            <!-- FUNCIÓN -->
+
+            <div class="input-group">
+
+                <label>Función</label>
+
+                <input
+                    type="text"
+                    placeholder="Ej: x**3 - x - 2"
+                >
+
+                <span class="help-text">
+                    Usa ** para exponentes.
+                </span>
+
+            </div>
+
+            <!-- INTERVALOS -->
+
+            <div class="double-input">
+
+                <div class="input-group">
+
+                    <label>a</label>
+
+                    <input
+                        type="number"
+                        placeholder="0"
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label>b</label>
+
+                    <input
+                        type="number"
+                        placeholder="2"
+                    >
+
+                </div>
+
+            </div>
+
+            <!-- TOLERANCIA -->
+
+            <div class="input-group">
+
+                <label>Tolerancia</label>
+
+                <input
+                    type="number"
+                    placeholder="0.0001"
+                >
+
+            </div>
+
+            <!-- ITERACIONES -->
+
+            <div class="input-group">
+
+                <label>Máx Iteraciones</label>
+
+                <input
+                    type="number"
+                    placeholder="100"
+                >
+
+            </div>
+
+            <!-- BOTÓN -->
+
+            <button class="solve-btn">
+                Resolver Método
+            </button>
+
+        </div>
+
+        <!-- PANEL DERECHO -->
+
+        <div class="results-panel">
+
+            <!-- TABLA -->
+
+            <div class="result-card">
+
+                <h2>
+                    Tabla de Iteraciones
+                </h2>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Iter</th>
+                            <th>x</th>
+                            <th>Error</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>1</td>
+                            <td>1.25</td>
+                            <td>0.25</td>
+                        </tr>
+
+                        <tr>
+                            <td>2</td>
+                            <td>1.48</td>
+                            <td>0.02</td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- GRÁFICA -->
+
+            <div class="result-card graph-card">
+
+                <h2>
+                    Gráfica
+                </h2>
+
+                <div class="graph-placeholder">
+
+                    Área de gráfica
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}
