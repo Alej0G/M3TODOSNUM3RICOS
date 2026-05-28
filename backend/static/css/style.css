@@ -492,3 +492,44 @@ th{
     }
 
 }
+
+
+.matrix-grid{
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+}
+
+.matrix-grid input{
+    width: 100%;
+}
+
+.vector-grid{
+    grid-template-columns: 1fr;
+}
+
+
+.matrix-grid{
+    display:grid;
+    gap:10px;
+    margin-top:10px;
+}
+
+.vector-grid{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:10px;
+}
+
+.matrix-grid input,
+.vector-grid input{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    outline:none;
+}
+

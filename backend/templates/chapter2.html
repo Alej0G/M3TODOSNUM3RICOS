@@ -6,9 +6,7 @@
 
     <div class="chapter-header">
 
-        <h1>
-            Capítulo 2
-        </h1>
+        <h1>Capítulo 2</h1>
 
         <p>
             Métodos iterativos para solución de sistemas lineales.
@@ -20,11 +18,13 @@
 
         <!-- PANEL IZQUIERDO -->
 
-        <div class="control-panel">
+        <form
+            class="control-panel"
+            method="POST"
+            action="/chapter2/resultado"
+        >
 
-            <h2>
-                Configuración
-            </h2>
+            <h2>Configuración</h2>
 
             <!-- MÉTODO -->
 
@@ -32,28 +32,42 @@
 
                 <label>Método</label>
 
-                <select>
-                    <option>Jacobi</option>
-                    <option>Gauss-Seidel</option>
-                    <option>SOR</option>
+                <select name="metodo">
+
+                    <option value="jacobi">
+                        Jacobi
+                    </option>
+
+                    <option value="gauss_seidel">
+                        Gauss-Seidel
+                    </option>
+
+                    <option value="sor">
+                        SOR
+                    </option>
+
                 </select>
 
             </div>
 
-            <!-- TAMAÑO MATRIZ -->
+            <!-- DIMENSIÓN -->
 
             <div class="input-group">
 
                 <label>Tamaño de matriz</label>
 
-                <select>
-                    <option>2x2</option>
-                    <option>3x3</option>
-                    <option>4x4</option>
-                    <option>5x5</option>
-                    <option>6x6</option>
-                    <option>7x7</option>
-                    <option>8x8</option>
+                <select
+                    name="dimension"
+                    id="dimension"
+                >
+
+                    <option value="2">2x2</option>
+                    <option value="3">3x3</option>
+                    <option value="4">4x4</option>
+                    <option value="5">5x5</option>
+                    <option value="6">6x6</option>
+                    <option value="7">7x7</option>
+
                 </select>
 
             </div>
@@ -64,20 +78,38 @@
 
                 <label>Matriz A</label>
 
-                <div class="matrix-placeholder">
-                    Espacio para matriz dinámica
+                <div
+                    id="matrix-container"
+                    class="matrix-grid"
+                >
                 </div>
 
             </div>
 
-            <!-- VECTOR -->
+            <!-- VECTOR B -->
 
             <div class="input-group">
 
                 <label>Vector b</label>
 
-                <div class="matrix-placeholder">
-                    Espacio para vector
+                <div
+                    id="vector-b-container"
+                    class="vector-grid"
+                >
+                </div>
+
+            </div>
+
+            <!-- VECTOR X0 -->
+
+            <div class="input-group">
+
+                <label>Vector inicial x0</label>
+
+                <div
+                    id="vector-x0-container"
+                    class="vector-grid"
+                >
                 </div>
 
             </div>
@@ -89,8 +121,11 @@
                 <label>Tolerancia</label>
 
                 <input
+                    name="tol"
                     type="number"
-                    placeholder="0.0001"
+                    step="any"
+                    placeholder="0.000001"
+                    value="0.000001"
                 >
 
             </div>
@@ -102,30 +137,39 @@
                 <label>Máx Iteraciones</label>
 
                 <input
+                    name="niter"
                     type="number"
                     placeholder="100"
+                    value="100"
                 >
 
             </div>
 
-            <!-- SOR -->
+            <!-- OMEGA -->
 
             <div class="input-group">
 
-                <label>Omega (SOR)</label>
+                <label>Omega (solo SOR)</label>
 
                 <input
+                    name="w1"
                     type="number"
-                    placeholder="1.1"
+                    step="any"
+                    placeholder="1.2"
+                    value="1.2"
                 >
 
             </div>
 
+            <!-- BOTÓN -->
+
             <button class="solve-btn">
+
                 Resolver Sistema
+
             </button>
 
-        </div>
+        </form>
 
         <!-- PANEL DERECHO -->
 
@@ -144,29 +188,75 @@
                     <thead>
 
                         <tr>
+
                             <th>Iter</th>
-                            <th>x₁</th>
-                            <th>x₂</th>
+
+                            {% if res_jacobi %}
+                                {% for i in range(res_jacobi.solution|length) %}
+                                    <th>x{{ i + 1 }}</th>
+                                {% endfor %}
+                            {% elif res_gauss %}
+                                {% for i in range(res_gauss.solution|length) %}
+                                    <th>x{{ i + 1 }}</th>
+                                {% endfor %}
+                            {% elif res_sor1 %}
+                                {% for i in range(res_sor1.solution|length) %}
+                                    <th>x{{ i + 1 }}</th>
+                                {% endfor %}
+                            {% else %}
+                                <th>x1</th>
+                                <th>x2</th>
+                            {% endif %}
+
                             <th>Error</th>
+
                         </tr>
 
                     </thead>
 
                     <tbody>
 
-                        <tr>
-                            <td>1</td>
-                            <td>0.8</td>
-                            <td>1.2</td>
-                            <td>0.25</td>
-                        </tr>
+                        {% set resultado = res_jacobi or res_gauss or res_sor1 %}
 
-                        <tr>
-                            <td>2</td>
-                            <td>0.95</td>
-                            <td>1.05</td>
-                            <td>0.04</td>
-                        </tr>
+                        {% if resultado %}
+
+                            {% for iteracion in resultado.iterations %}
+
+                            <tr>
+
+                                <td>
+                                    {{ iteracion.k }}
+                                </td>
+
+                                {% for valor in iteracion.x %}
+
+                                <td>
+                                    {{ "%.6f"|format(valor) }}
+                                </td>
+
+                                {% endfor %}
+
+                                <td>
+                                    {{ "%.6e"|format(iteracion.abs_err) }}
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+
+                                <td colspan="10">
+
+                                    No hay resultados todavía.
+
+                                </td>
+
+                            </tr>
+
+                        {% endif %}
 
                     </tbody>
 
@@ -184,14 +274,63 @@
 
                 <div class="analysis-box">
 
-                    <p>
-                        Radio espectral:
-                        <strong>0.82</strong>
-                    </p>
+                    {% if resultado %}
 
-                    <p class="success-text">
-                        El método converge correctamente.
-                    </p>
+                        <p>
+
+                            <strong>
+                                Radio espectral:
+                            </strong>
+
+                            {{ resultado.spectral_radius }}
+
+                        </p>
+
+                        <p>
+
+                            <strong>
+                                Iteraciones:
+                            </strong>
+
+                            {{ resultado.total_iter }}
+
+                        </p>
+
+                        <p>
+
+                            <strong>
+                                Error final:
+                            </strong>
+
+                            {{ resultado.error_final }}
+
+                        </p>
+
+                        {% if resultado.converged %}
+
+                            <p class="success-text">
+
+                                {{ resultado.message }}
+
+                            </p>
+
+                        {% else %}
+
+                            <p class="error-text">
+
+                                {{ resultado.message }}
+
+                            </p>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <p>
+                            Aún no se ha ejecutado ningún método.
+                        </p>
+
+                    {% endif %}
 
                 </div>
 
@@ -206,7 +345,21 @@
                 </h2>
 
                 <div class="graph-placeholder">
-                    Área de gráfica
+
+                    {% if graph_errors %}
+
+                        <img
+                            src="data:image/png;base64,{{ graph_errors }}"
+                            alt="Gráfica de errores"
+                            style="width: 100%; border-radius: 12px;"
+                        >
+
+                    {% else %}
+
+                        Área de gráfica
+
+                    {% endif %}
+
                 </div>
 
             </div>
@@ -217,4 +370,79 @@
 
 </section>
 
+<!-- SCRIPT MATRICES DINÁMICAS -->
+
+<script>
+
+const dimensionSelect = document.getElementById("dimension");
+
+const matrixContainer = document.getElementById("matrix-container");
+
+const vectorBContainer = document.getElementById("vector-b-container");
+
+const vectorX0Container = document.getElementById("vector-x0-container");
+
+function generarCampos() {
+
+    const n = parseInt(dimensionSelect.value);
+
+    matrixContainer.innerHTML = "";
+
+    vectorBContainer.innerHTML = "";
+
+    vectorX0Container.innerHTML = "";
+
+    matrixContainer.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+
+    for (let i = 0; i < n; i++) {
+
+        for (let j = 0; j < n; j++) {
+
+            matrixContainer.innerHTML += `
+                <input
+                    name="A${i}${j}"
+                    type="number"
+                    step="any"
+                    placeholder="A${i}${j}"
+                    required
+                >
+            `;
+        }
+    }
+
+    for (let i = 0; i < n; i++) {
+
+        vectorBContainer.innerHTML += `
+            <input
+                name="b${i}"
+                type="number"
+                step="any"
+                placeholder="b${i}"
+                required
+            >
+        `;
+
+        vectorX0Container.innerHTML += `
+            <input
+                name="x0${i}"
+                type="number"
+                step="any"
+                placeholder="x0${i}"
+                value="0"
+                required
+            >
+        `;
+    }
+}
+
+dimensionSelect.addEventListener(
+    "change",
+    generarCampos
+);
+
+generarCampos();
+
+</script>
+
 {% endblock %}
+
