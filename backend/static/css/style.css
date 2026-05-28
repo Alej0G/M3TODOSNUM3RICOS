@@ -302,10 +302,12 @@ body{
 }
 
 .results-panel{
+
     display: flex;
     flex-direction: column;
 
-    gap: 30px;
+    gap: 24px;
+    width: 100%;
 }
 
 /* ===================================== */
@@ -533,3 +535,22 @@ th{
     outline:none;
 }
 
+
+.graph-image {
+
+    width: 100%;
+    max-width: 100%;
+
+    height: auto;
+
+    display: block;
+
+    border-radius: 12px;
+
+    object-fit: contain;
+}
+
+.graph-card {
+
+    overflow: hidden;
+}
