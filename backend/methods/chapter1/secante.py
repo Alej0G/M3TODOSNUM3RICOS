@@ -1,24 +1,21 @@
 import pandas as pd
 
-def newton(f, df, x0, tol, max_iter):
+
+def secante(f, x0, x1, tol, max_iter):
     iteraciones = []
 
-    x_ant = x0
-
     for i in range(max_iter):
-        derivada = df(x_ant)
+        f0 = f(x0)
+        f1 = f(x1)
 
-        if abs(derivada) < 1e-12:
-            raise ValueError(
-                'La derivada es cercana a cero. '
-                'El método puede divergir.'
-            )
+        if f1 - f0 == 0:
+            break
 
-        xn = x_ant - f(x_ant) / derivada
+        xn = x1 - (f1 * (x1 - x0)) / (f1 - f0)
 
         fxn = f(xn)
 
-        e_abs = abs(xn - x_ant)
+        e_abs = abs(xn - x1)
         e_rel = e_abs / abs(xn) if xn != 0 else e_abs
         e_cond = abs(fxn)
 
@@ -34,6 +31,7 @@ def newton(f, df, x0, tol, max_iter):
         if e_rel < tol:
             break
 
-        x_ant = xn
+        x0 = x1
+        x1 = xn
 
     return pd.DataFrame(iteraciones)

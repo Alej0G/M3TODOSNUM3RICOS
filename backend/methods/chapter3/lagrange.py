@@ -1,22 +1,23 @@
 import sympy as sp
 
 
-def lagrange_interpolacion(x_datos, y_datos):
-    x = sp.Symbol('x')
-
-    n = len(x_datos)
+def lagrange(x_puntos, y_puntos):
+    t = sp.Symbol('x')
 
     polinomio = 0
 
+    n = len(x_puntos)
+
     for i in range(n):
-        termino = y_datos[i]
+        L = 1
 
         for j in range(n):
             if i != j:
-                termino *= (x - x_datos[j]) / (x_datos[i] - x_datos[j])
+                L *= (
+                    (t - x_puntos[j]) /
+                    (x_puntos[i] - x_puntos[j])
+                )
 
-        polinomio += termino
+        polinomio += y_puntos[i] * L
 
-    polinomio = sp.expand(polinomio)
-
-    return polinomio
+    return sp.expand(polinomio)

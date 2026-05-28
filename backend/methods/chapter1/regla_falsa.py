@@ -1,12 +1,17 @@
 import pandas as pd
 
-
-def biseccion(f, a, b, tol, max_iter):
+def regla_falsa(f, a, b, tol, max_iter):
     iteraciones = []
     x_ant = a
 
     for i in range(max_iter):
-        xm = (a + b) / 2
+        fa = f(a)
+        fb = f(b)
+
+        if fb - fa == 0:
+            break
+
+        xm = b - (fb * (b - a)) / (fb - fa)
         fxm = f(xm)
 
         e_abs = abs(xm - x_ant)
@@ -25,7 +30,7 @@ def biseccion(f, a, b, tol, max_iter):
         if i > 0 and e_rel < tol:
             break
 
-        if f(a) * fxm < 0:
+        if fa * fxm < 0:
             b = xm
         else:
             a = xm

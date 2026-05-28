@@ -1,20 +1,22 @@
 import pandas as pd
 
-def newton(f, df, x0, tol, max_iter):
+
+def raices_multiples(f, df, ddf, x0, tol, max_iter):
     iteraciones = []
 
     x_ant = x0
 
     for i in range(max_iter):
-        derivada = df(x_ant)
+        fx = f(x_ant)
+        dfx = df(x_ant)
+        ddfx = ddf(x_ant)
 
-        if abs(derivada) < 1e-12:
-            raise ValueError(
-                'La derivada es cercana a cero. '
-                'El método puede divergir.'
-            )
+        denominador = (dfx**2) - (fx * ddfx)
 
-        xn = x_ant - f(x_ant) / derivada
+        if denominador == 0:
+            break
+
+        xn = x_ant - (fx * dfx) / denominador
 
         fxn = f(xn)
 

@@ -1,21 +1,21 @@
 import numpy as np
 import sympy as sp
 
+def vandermonde(x_puntos, y_puntos):
+    x = np.array(x_puntos, dtype=float)
+    y = np.array(y_puntos, dtype=float)
 
-def vandermonde_interpolacion(x_datos, y_datos):
-    n = len(x_datos)
+    n = len(x)
 
-    matriz = np.vander(x_datos, increasing=True)
+    V = np.vander(x, increasing=True)
 
-    coeficientes = np.linalg.solve(matriz, y_datos)
+    coeficientes = np.linalg.solve(V, y)
 
-    x = sp.Symbol('x')
+    t = sp.Symbol('x')
 
-    polinomio = 0
+    polinomio = sum(
+        coeficientes[i] * (t**i)
+        for i in range(n)
+    )
 
-    for i in range(n):
-        polinomio += coeficientes[i] * x**i
-
-    polinomio = sp.expand(polinomio)
-
-    return polinomio, coeficientes
+    return sp.expand(polinomio)

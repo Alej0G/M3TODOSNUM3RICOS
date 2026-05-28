@@ -1,31 +1,22 @@
 import pandas as pd
 
-def newton(f, df, x0, tol, max_iter):
+
+def punto_fijo(g, x0, tol, max_iter):
     iteraciones = []
 
     x_ant = x0
 
     for i in range(max_iter):
-        derivada = df(x_ant)
-
-        if abs(derivada) < 1e-12:
-            raise ValueError(
-                'La derivada es cercana a cero. '
-                'El método puede divergir.'
-            )
-
-        xn = x_ant - f(x_ant) / derivada
-
-        fxn = f(xn)
+        xn = g(x_ant)
 
         e_abs = abs(xn - x_ant)
         e_rel = e_abs / abs(xn) if xn != 0 else e_abs
-        e_cond = abs(fxn)
+        e_cond = e_abs
 
         iteraciones.append({
             'Iter': i + 1,
             'x_n': xn,
-            'f(x)': fxn,
+            'f(x)': xn - x_ant,
             'E_Abs': e_abs,
             'E_Rel': e_rel,
             'E_Cond': e_cond
