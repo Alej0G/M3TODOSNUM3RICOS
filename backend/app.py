@@ -33,6 +33,15 @@ def home():
 def chapter1():
     return render_template("chapter1.html")
 
+@app.route("/chapter1/resultado", methods=["POST"])
+def resultado_capitulo1():
+
+    return render_template(
+        "chapter1.html",
+        resultado=None,
+        graph=None
+    )
+
 
 @app.route("/chapter2")
 def chapter2():

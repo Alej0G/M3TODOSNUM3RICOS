@@ -20,7 +20,11 @@
 
         <!-- PANEL IZQUIERDO -->
 
-        <div class="control-panel">
+        <form
+            class="control-panel"
+            method="POST"
+            action="/chapter1/resultado"
+        >
 
             <h2>
                 Configuración
@@ -32,14 +36,31 @@
 
                 <label>Método</label>
 
-                <select>
+                <select name="metodo">
 
-                    <option>Bisección</option>
-                    <option>Regla falsa</option>
-                    <option>Punto fijo</option>
-                    <option>Newton</option>
-                    <option>Secante</option>
-                    <option>Raíces múltiples</option>
+                    <option value="biseccion">
+                        Bisección
+                    </option>
+
+                    <option value="regla_falsa">
+                        Regla falsa
+                    </option>
+
+                    <option value="punto_fijo">
+                        Punto fijo
+                    </option>
+
+                    <option value="newton">
+                        Newton
+                    </option>
+
+                    <option value="secante">
+                        Secante
+                    </option>
+
+                    <option value="raices_multiples">
+                        Raíces múltiples
+                    </option>
 
                 </select>
 
@@ -52,6 +73,7 @@
                 <label>Función</label>
 
                 <input
+                    name="funcion"
                     type="text"
                     placeholder="Ej: x**3 - x - 2"
                 >
@@ -71,7 +93,9 @@
                     <label>a</label>
 
                     <input
+                        name="a"
                         type="number"
+                        step="any"
                         placeholder="0"
                     >
 
@@ -82,11 +106,28 @@
                     <label>b</label>
 
                     <input
+                        name="b"
                         type="number"
+                        step="any"
                         placeholder="2"
                     >
 
                 </div>
+
+            </div>
+
+            <!-- x0 -->
+
+            <div class="input-group">
+
+                <label>x0</label>
+
+                <input
+                    name="x0"
+                    type="number"
+                    step="any"
+                    placeholder="1"
+                >
 
             </div>
 
@@ -97,7 +138,9 @@
                 <label>Tolerancia</label>
 
                 <input
+                    name="tol"
                     type="number"
+                    step="any"
                     placeholder="0.0001"
                 >
 
@@ -110,6 +153,7 @@
                 <label>Máx Iteraciones</label>
 
                 <input
+                    name="niter"
                     type="number"
                     placeholder="100"
                 >
@@ -119,10 +163,12 @@
             <!-- BOTÓN -->
 
             <button class="solve-btn">
+
                 Resolver Método
+
             </button>
 
-        </div>
+        </form>
 
         <!-- PANEL DERECHO -->
 
@@ -141,30 +187,130 @@
                     <thead>
 
                         <tr>
+
                             <th>Iter</th>
+
                             <th>x</th>
+
                             <th>Error</th>
+
                         </tr>
 
                     </thead>
 
                     <tbody>
 
-                        <tr>
-                            <td>1</td>
-                            <td>1.25</td>
-                            <td>0.25</td>
-                        </tr>
+                    {% if resultado %}
+
+                        {% for iteracion in resultado.iterations %}
 
                         <tr>
-                            <td>2</td>
-                            <td>1.48</td>
-                            <td>0.02</td>
+
+                            <td>
+                                {{ iteracion.k }}
+                            </td>
+
+                            <td>
+                                {{ "%.10f"|format(iteracion.x) }}
+                            </td>
+
+                            <td>
+                                {{ "%.2e"|format(iteracion.error) }}
+                            </td>
+
                         </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <tr>
+
+                            <td colspan="3">
+
+                                No hay resultados todavía.
+
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
 
                     </tbody>
 
                 </table>
+
+            </div>
+
+            <!-- ANÁLISIS -->
+
+            <div class="result-card">
+
+                <h2>
+                    Resultado
+                </h2>
+
+                <div class="analysis-box">
+
+                    {% if resultado %}
+
+                        <p>
+
+                            Raíz aproximada:
+
+                            <strong>
+                                {{ resultado.root }}
+                            </strong>
+
+                        </p>
+
+                        <p>
+
+                            Iteraciones:
+
+                            <strong>
+                                {{ resultado.total_iter }}
+                            </strong>
+
+                        </p>
+
+                        <p>
+
+                            Error final:
+
+                            <strong>
+                                {{ resultado.error_final }}
+                            </strong>
+
+                        </p>
+
+                        {% if resultado.converged %}
+
+                            <p class="success-text">
+
+                                {{ resultado.message }}
+
+                            </p>
+
+                        {% else %}
+
+                            <p class="error-text">
+
+                                {{ resultado.message }}
+
+                            </p>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <p>
+                            Aún no se ha ejecutado ningún método.
+                        </p>
+
+                    {% endif %}
+
+                </div>
 
             </div>
 
@@ -178,7 +324,18 @@
 
                 <div class="graph-placeholder">
 
-                    Área de gráfica
+                    {% if graph %}
+
+                        <img
+                            src="data:image/png;base64,{{ graph }}"
+                            class="graph-image"
+                        >
+
+                    {% else %}
+
+                        Área de gráfica
+
+                    {% endif %}
 
                 </div>
 
