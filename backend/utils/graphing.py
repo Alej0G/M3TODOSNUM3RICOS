@@ -2,12 +2,11 @@ import io
 import base64
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")           # sin interfaz gráfica (modo servidor)
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
 def _fig_to_base64(fig) -> str:
-    """Convierte una figura matplotlib a string base64 para embeber en HTML."""
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=110, bbox_inches="tight",
                 facecolor="#fafafa")
@@ -22,16 +21,6 @@ def _fig_to_base64(fig) -> str:
 # ─────────────────────────────────────────────────────────────────────
 
 def plot_root_finding(df, f_expr: str, metodo: str, raiz: float) -> str:
-    """
-    Gráfica para métodos de búsqueda de raíces (Capítulo 1).
-
-    df      : pandas DataFrame con columnas Iter, x_n, f(x), E_Abs, E_Rel, E_Cond
-    f_expr  : string con la expresión de f (ej: "x**3 - x - 2")
-    metodo  : clave del método ("biseccion", "newton", etc.)
-    raiz    : valor de la raíz aproximada encontrada
-
-    Retorna imagen en base64.
-    """
     nombres = {
         "biseccion":        "Bisección",
         "regla_falsa":      "Regla Falsa",
@@ -50,7 +39,6 @@ def plot_root_finding(df, f_expr: str, metodo: str, raiz: float) -> str:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
-    # ── Panel izquierdo: f(x) y la raíz ──────────────────────────────
     try:
         import math
         margen  = max(abs(raiz) * 0.6, 3.0)
@@ -69,7 +57,6 @@ def plot_root_finding(df, f_expr: str, metodo: str, raiz: float) -> str:
 
         y_vals = np.array(y_vals)
 
-        # Limitar rango Y para que la raíz sea visible
         y_finite = y_vals[np.isfinite(y_vals)]
         if y_finite.size > 0:
             yq_lo, yq_hi = np.percentile(y_finite, [5, 95])
@@ -93,7 +80,6 @@ def plot_root_finding(df, f_expr: str, metodo: str, raiz: float) -> str:
                  ha="center", va="center", transform=ax1.transAxes,
                  fontsize=9, color="#888")
 
-    # ── Panel derecho: error absoluto por iteración ───────────────────
     iters  = df["Iter"].tolist()
     errors = df["E_Abs"].tolist()
     positive = [(i, e) for i, e in zip(iters, errors) if e > 0]
@@ -122,17 +108,6 @@ def plot_root_finding(df, f_expr: str, metodo: str, raiz: float) -> str:
 # ─────────────────────────────────────────────────────────────────────
 
 def plot_error_comparison(results: dict) -> str:
-    """
-    Gráfica comparativa de error absoluto vs iteración para
-    todos los métodos que estén en `results`.
-
-    results = {
-        "jacobi":       {"iterations": [{"k":1,"abs_err":0.5}, ...]},
-        "gauss_seidel": {...},
-        "sor":          {...},
-    }
-    Retorna imagen en base64.
-    """
     fig, ax = plt.subplots(figsize=(7, 4))
     fig.patch.set_facecolor("#fafafa")
     ax.set_facecolor("#fafafa")
@@ -168,7 +143,6 @@ def plot_error_comparison(results: dict) -> str:
         plt.close(fig)
         return ""
 
-    # Línea de tolerancia
     tol = None
     for key in colors:
         if key in results and "iterations" in results[key]:
@@ -193,10 +167,6 @@ def plot_error_comparison(results: dict) -> str:
 
 
 def plot_spectral_radii(radii: dict) -> str:
-    """
-    Gráfica de barras horizontales con el radio espectral de cada método.
-    radii = {"Jacobi": 0.32, "Gauss-Seidel": 0.18, "SOR": 0.09}
-    """
     if not radii:
         return ""
 
@@ -226,4 +196,85 @@ def plot_spectral_radii(radii: dict) -> str:
     ax.spines["right"].set_visible(False)
     fig.tight_layout()
 
+    return _fig_to_base64(fig)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# CAPÍTULO 3 — Interpolación
+# ─────────────────────────────────────────────────────────────────────
+
+def plot_interpolation(
+    x_puntos: list,
+    y_puntos: list,
+    metodo: str,
+    polinomio=None,
+    interpolador=None,
+    x_eval: float = None,
+    y_eval: float = None,
+) -> str:
+    import sympy as sp
+
+    nombres = {
+        "vandermonde":   "Vandermonde",
+        "lagrange":      "Lagrange",
+        "newton":        "Newton Interpolante",
+        "spline_lineal": "Spline Lineal",
+        "spline_cubico": "Spline Cúbico",
+    }
+    titulo = nombres.get(metodo, metodo)
+
+    x_arr = np.array(x_puntos, dtype=float)
+    y_arr = np.array(y_puntos, dtype=float)
+
+    margen = (x_arr.max() - x_arr.min()) * 0.15 + 0.5
+    x_plot = np.linspace(x_arr.min() - margen, x_arr.max() + margen, 500)
+
+    y_plot = None
+
+    if polinomio is not None:
+        try:
+            t = sp.Symbol("x")
+            f_num = sp.lambdify(t, polinomio, modules=["numpy"])
+            y_plot = np.array(f_num(x_plot), dtype=float)
+        except Exception:
+            y_plot = None
+
+    elif interpolador is not None:
+        try:
+            y_plot = np.array(interpolador(x_plot), dtype=float)
+        except Exception:
+            y_plot = None
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    fig.patch.set_facecolor("#fafafa")
+    ax.set_facecolor("#fafafa")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    if y_plot is not None:
+        y_finite = y_plot[np.isfinite(y_plot)]
+        if y_finite.size > 0:
+            yq_lo, yq_hi = np.percentile(y_finite, [2, 98])
+            ypad = max(abs(yq_hi - yq_lo) * 0.25, 1.0)
+            ax.set_ylim(yq_lo - ypad, yq_hi + ypad)
+
+        ax.plot(x_plot, y_plot, color="#4361ee", linewidth=2,
+                label=titulo, zorder=2)
+
+    ax.scatter(x_arr, y_arr, color="#ef476f", zorder=5, s=70,
+               label="Puntos dados", edgecolors="white", linewidths=0.8)
+
+    if x_eval is not None and y_eval is not None:
+        ax.scatter([x_eval], [y_eval], color="#06d6a0", zorder=6, s=120,
+                   marker="*", label=f"P({x_eval}) = {y_eval:.4f}")
+        ax.axvline(x_eval, color="#06d6a0", linewidth=1,
+                   linestyle="--", alpha=0.5)
+
+    ax.set_xlabel("x", fontsize=11)
+    ax.set_ylabel("P(x)", fontsize=11)
+    ax.set_title(f"Interpolación — {titulo}", fontsize=12, fontweight="bold")
+    ax.legend(fontsize=9, framealpha=0.9)
+    ax.grid(True, linestyle="--", alpha=0.3)
+
+    fig.tight_layout()
     return _fig_to_base64(fig)

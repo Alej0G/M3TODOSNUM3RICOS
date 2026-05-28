@@ -6,17 +6,24 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, request, jsonify, render_template
 
 # ── Capítulo 1 ────────────────────────────────────────────────────────
-from methods.chapter1.bisection      import biseccion
-from methods.chapter1.regla_falsa    import regla_falsa
-from methods.chapter1.punto_fijo     import punto_fijo
-from methods.chapter1.newton         import newton
-from methods.chapter1.secante        import secante
+from methods.chapter1.bisection        import biseccion
+from methods.chapter1.regla_falsa      import regla_falsa
+from methods.chapter1.punto_fijo       import punto_fijo
+from methods.chapter1.newton           import newton
+from methods.chapter1.secante          import secante
 from methods.chapter1.raices_multiples import raices_multiples
 
 # ── Capítulo 2 ────────────────────────────────────────────────────────
-from methods.chapter2.jacobi         import jacobi
-from methods.chapter2.gauss_seidel   import gauss_seidel
-from methods.chapter2.sor            import sor
+from methods.chapter2.jacobi       import jacobi
+from methods.chapter2.gauss_seidel import gauss_seidel
+from methods.chapter2.sor          import sor
+
+# ── Capítulo 3 ────────────────────────────────────────────────────────
+from methods.chapter3.vandermonde        import vandermonde
+from methods.chapter3.lagrange           import lagrange
+from methods.chapter3.newton_interpolante import newton_interpolante
+from methods.chapter3.spline_lineal      import spline_lineal
+from methods.chapter3.spline_cubico      import spline_cubico
 
 from utils.validators import validate_input
 from utils.parser     import parse_matrix, parse_vector, matrix_info
@@ -25,6 +32,7 @@ from utils.graphing   import (
     plot_error_comparison,
     plot_spectral_radii,
     plot_root_finding,
+    plot_interpolation,
 )
 
 import sympy as sp
@@ -40,20 +48,21 @@ app = Flask(__name__)
 def home():
     return render_template("index.html")
 
-
 @app.route("/chapter1")
 def chapter1():
     return render_template("chapter1.html")
-
 
 @app.route("/chapter2")
 def chapter2():
     return render_template("chapter2.html", rango=range(7))
 
-
 @app.route("/chapter3")
 def chapter3():
-    return render_template("chapter3.html")
+    return render_template(
+        "chapter3.html",
+        rango=range(10),
+        n_puntos=3
+    )
 
 
 # ─────────────────────────────────────────────
@@ -66,10 +75,9 @@ def _parse_function(expr_str: str):
         expr = sp.sympify(expr_str)
     except Exception:
         raise ValueError(f"Expresión inválida: '{expr_str}'")
-
-    f   = sp.lambdify(x, expr,               modules=["numpy", "math"])
-    df  = sp.lambdify(x, sp.diff(expr, x),   modules=["numpy", "math"])
-    ddf = sp.lambdify(x, sp.diff(expr, x, 2),modules=["numpy", "math"])
+    f   = sp.lambdify(x, expr,                modules=["numpy", "math"])
+    df  = sp.lambdify(x, sp.diff(expr, x),    modules=["numpy", "math"])
+    ddf = sp.lambdify(x, sp.diff(expr, x, 2), modules=["numpy", "math"])
     return f, df, ddf
 
 
@@ -90,43 +98,30 @@ def _df_to_iterations(df_result):
 @app.route("/chapter1/resultado", methods=["POST"])
 def resultado_capitulo1():
 
-    print("=== FORM DATA ===")
-    print(request.form)
-
     def err(msg):
-        print("=== ERROR:", msg)
         return render_template("chapter1.html", error=msg)
 
-    # ── Método ────────────────────────────────
     metodo = request.form.get("metodo", "").strip()
-    print("=== MÉTODO:", metodo)
     if not metodo:
         return err("Debes seleccionar un método.")
 
-    # ── Función ───────────────────────────────
     funcion_str = request.form.get("funcion", "").strip()
-    print("=== FUNCIÓN:", funcion_str)
     if not funcion_str:
         return err("Debes ingresar una función f(x).")
 
     g_str = request.form.get("g_funcion", "").strip()
 
-    # ── Parámetros numéricos ──────────────────
     try:
         tol   = float(request.form.get("tol",   1e-6))
         niter = int(request.form.get("niter",   100))
-        print("=== TOL:", tol, "NITER:", niter)
     except Exception:
         return err("Tolerancia o iteraciones inválidas.")
 
-    # ── Parsear función con sympy ─────────────
     try:
         f, df_func, ddf_func = _parse_function(funcion_str)
-        print("=== FUNCIÓN PARSEADA OK")
     except ValueError as e:
         return err(str(e))
 
-    # ── Parsear g(x) para punto fijo ──────────
     g_func = None
     if metodo == "punto_fijo":
         g_expr = g_str if g_str else funcion_str
@@ -135,22 +130,16 @@ def resultado_capitulo1():
         except ValueError as e:
             return err(str(e))
 
-    # ── Leer a, b, x0 ─────────────────────────
     try:
         a_raw  = request.form.get("a",  "")
         b_raw  = request.form.get("b",  "")
         x0_raw = request.form.get("x0", "")
-
         a  = float(a_raw)  if a_raw  != "" else None
         b  = float(b_raw)  if b_raw  != "" else None
         x0 = float(x0_raw) if x0_raw != "" else None
-
-        print("=== a:", a, "b:", b, "x0:", x0)
-
     except Exception:
         return err("Los valores de intervalo / punto inicial deben ser numéricos.")
 
-    # ── Validaciones por método ───────────────
     NECESITA_AB  = {"biseccion", "regla_falsa"}
     NECESITA_X0  = {"punto_fijo", "newton", "raices_multiples"}
     NECESITA_X0B = {"secante"}
@@ -168,9 +157,7 @@ def resultado_capitulo1():
         if x0 is None or b is None:
             return err("Secante necesita x0 y x1 (campo b).")
 
-    # ── Ejecutar método ───────────────────────
     try:
-        print("=== EJECUTANDO MÉTODO...")
         if metodo == "biseccion":
             df_res = biseccion(f, a, b, tol, niter)
         elif metodo == "regla_falsa":
@@ -185,16 +172,12 @@ def resultado_capitulo1():
             df_res = raices_multiples(f, df_func, ddf_func, x0, tol, niter)
         else:
             return err(f"Método '{metodo}' no reconocido.")
-
-        print("=== RESULTADO DF:", df_res)
-
     except Exception as e:
         return err(f"Error al ejecutar el método: {e}")
 
     if df_res is None or df_res.empty:
         return err("El método no produjo resultados. Revisa los parámetros.")
 
-    # ── Armar objeto resultado ─────────────────
     iterations = _df_to_iterations(df_res)
     last       = iterations[-1]
     raiz       = last["x"]
@@ -222,12 +205,8 @@ def resultado_capitulo1():
         ),
     }
 
-    print("=== RESULTADO ARMADO:", resultado["root"], "iters:", resultado["total_iter"])
-
-    # ── Gráfica ───────────────────────────────
     try:
         graph = plot_root_finding(df_res, funcion_str, metodo, raiz)
-        print("=== GRÁFICA GENERADA OK")
     except Exception as e:
         print("ERROR GRAPH CH1:", e)
         graph = ""
@@ -253,33 +232,27 @@ def resultado_capitulo2():
     metodo   = request.form.get("metodo")
 
     if not comparar and not metodo:
-        return render_template(
-            "chapter2.html", rango=range(7),
-            error="Debes seleccionar un método."
-        )
+        return render_template("chapter2.html", rango=range(7),
+                               error="Debes seleccionar un método.")
 
     try:
         dim = int(request.form.get("dimension", 3))
         if not (2 <= dim <= 7):
             raise ValueError
     except Exception:
-        return render_template(
-            "chapter2.html", rango=range(7),
-            error="Dimensión inválida."
-        )
+        return render_template("chapter2.html", rango=range(7),
+                               error="Dimensión inválida.")
 
     try:
         A = [
             [float(request.form.get(f"A{i}{j}", 0)) for j in range(dim)]
             for i in range(dim)
         ]
-        b = [float(request.form.get(f"b{i}", 0)) for i in range(dim)]
+        b  = [float(request.form.get(f"b{i}",  0)) for i in range(dim)]
         x0 = [float(request.form.get(f"x0{i}", 0)) for i in range(dim)]
     except Exception:
-        return render_template(
-            "chapter2.html", rango=range(7),
-            error="Todos los campos deben ser numéricos."
-        )
+        return render_template("chapter2.html", rango=range(7),
+                               error="Todos los campos deben ser numéricos.")
 
     try:
         tol    = float(request.form.get("tol",   1e-6))
@@ -287,20 +260,16 @@ def resultado_capitulo2():
         w1_raw = request.form.get("w1")
         w1     = float(w1_raw) if w1_raw not in [None, ""] else 1.2
     except Exception:
-        return render_template(
-            "chapter2.html", rango=range(7),
-            error="Parámetros inválidos."
-        )
+        return render_template("chapter2.html", rango=range(7),
+                               error="Parámetros inválidos.")
 
     errores = validate_input({
         "A": A, "b": b, "x0": x0,
         "tol": tol, "max_iter": niter, "omega": w1,
     })
     if errores:
-        return render_template(
-            "chapter2.html", rango=range(7),
-            error=" | ".join(errores)
-        )
+        return render_template("chapter2.html", rango=range(7),
+                               error=" | ".join(errores))
 
     res_jacobi = res_gauss = res_sor1 = None
 
@@ -328,22 +297,19 @@ def resultado_capitulo2():
     if res_sor1:   metodos_graph["sor"]          = res_sor1
 
     if not metodos_graph:
-        return render_template(
-            "chapter2.html", rango=range(7),
-            error="No se pudo ejecutar ningún método."
-        )
+        return render_template("chapter2.html", rango=range(7),
+                               error="No se pudo ejecutar ningún método.")
 
     mejor = None
     if comparar:
         comparacion = {}
-        if res_jacobi: comparacion["Jacobi"]           = res_jacobi
-        if res_gauss:  comparacion["Gauss-Seidel"]     = res_gauss
-        if res_sor1:   comparacion[f"SOR (w={w1})"]    = res_sor1
+        if res_jacobi: comparacion["Jacobi"]        = res_jacobi
+        if res_gauss:  comparacion["Gauss-Seidel"]  = res_gauss
+        if res_sor1:   comparacion[f"SOR (w={w1})"] = res_sor1
         mejor = min(
             comparacion.items(),
             key=lambda item: (
-                item[1]["total_iter"]
-                if item[1].get("converged") else 999999
+                item[1]["total_iter"] if item[1].get("converged") else 999999
             )
         )[0]
 
@@ -358,9 +324,9 @@ def resultado_capitulo2():
 
     try:
         radii = {}
-        if res_jacobi: radii["Jacobi"]          = res_jacobi["spectral_radius"]
-        if res_gauss:  radii["Gauss-Seidel"]    = res_gauss["spectral_radius"]
-        if res_sor1:   radii[f"SOR (w={w1})"]   = res_sor1["spectral_radius"]
+        if res_jacobi: radii["Jacobi"]         = res_jacobi["spectral_radius"]
+        if res_gauss:  radii["Gauss-Seidel"]   = res_gauss["spectral_radius"]
+        if res_sor1:   radii[f"SOR (w={w1})"]  = res_sor1["spectral_radius"]
         graph_spectral = plot_spectral_radii(radii)
     except Exception as e:
         print("ERROR GRAPH SPECTRAL:", e)
@@ -378,6 +344,156 @@ def resultado_capitulo2():
         w1=w1,
         graph_errors=graph_errors,
         graph_spectral=graph_spectral,
+    )
+
+
+# ─────────────────────────────────────────────
+# RESULTADOS CAPÍTULO 3
+# ─────────────────────────────────────────────
+
+@app.route("/chapter3/resultado", methods=["POST"])
+def resultado_capitulo3():
+
+    def err(msg, prev_x=[], prev_y=[], n=3):
+        return render_template(
+            "chapter3.html", error=msg,
+            rango=range(10), n_puntos=n
+        )
+
+    # ── Método y número de puntos ─────────────
+    metodo   = request.form.get("metodo", "").strip()
+    try:
+        n_puntos = int(request.form.get("n_puntos", 3))
+        if not (2 <= n_puntos <= 10):
+            raise ValueError
+    except Exception:
+        return err("Número de puntos inválido.")
+
+    # ── Leer puntos ───────────────────────────
+    try:
+        x_puntos = [float(request.form.get(f"x{i}", 0)) for i in range(n_puntos)]
+        y_puntos = [float(request.form.get(f"y{i}", 0)) for i in range(n_puntos)]
+    except Exception:
+        return err("Todos los puntos deben ser numéricos.", n=n_puntos)
+
+    # Verificar x distintos
+    if len(set(x_puntos)) != len(x_puntos):
+        return err("Los valores de x deben ser distintos.", x_puntos, y_puntos, n_puntos)
+
+    # ── x para evaluar (opcional) ─────────────
+    x_eval_raw = request.form.get("x_eval", "").strip()
+    x_eval = float(x_eval_raw) if x_eval_raw != "" else None
+
+    # ── Ejecutar método ───────────────────────
+    polinomio    = None
+    interpolador = None
+    es_spline    = metodo in {"spline_lineal", "spline_cubico"}
+
+    try:
+        if metodo == "vandermonde":
+            polinomio = vandermonde(x_puntos, y_puntos)
+
+        elif metodo == "lagrange":
+            polinomio = lagrange(x_puntos, y_puntos)
+
+        elif metodo == "newton":
+            polinomio = newton_interpolante(x_puntos, y_puntos)
+
+        elif metodo == "spline_lineal":
+            interpolador = spline_lineal(x_puntos, y_puntos)
+
+        elif metodo == "spline_cubico":
+            interpolador = spline_cubico(x_puntos, y_puntos)
+
+        else:
+            return err(f"Método '{metodo}' no reconocido.",
+                       x_puntos, y_puntos, n_puntos)
+
+    except Exception as e:
+        return err(f"Error al ejecutar el método: {e}",
+                   x_puntos, y_puntos, n_puntos)
+
+    # ── Evaluar P(x_eval) ─────────────────────
+    y_eval = None
+    if x_eval is not None:
+        try:
+            if polinomio is not None:
+                t = sp.Symbol("x")
+                y_eval = float(polinomio.subs(t, x_eval))
+            elif interpolador is not None:
+                y_eval = float(interpolador(x_eval))
+        except Exception as e:
+            print("ERROR EVAL:", e)
+
+    # ── Evaluar en los puntos originales ──────
+    # Para mostrar el error en la tabla
+    y_interp = None
+    errores  = None
+    try:
+        if polinomio is not None:
+            t = sp.Symbol("x")
+            f_num = sp.lambdify(t, polinomio, modules=["numpy"])
+            y_interp = [float(f_num(xi)) for xi in x_puntos]
+        elif interpolador is not None:
+            y_interp = [float(interpolador(xi)) for xi in x_puntos]
+
+        if y_interp:
+            errores = [abs(y_interp[i] - y_puntos[i]) for i in range(n_puntos)]
+    except Exception as e:
+        print("ERROR Y_INTERP:", e)
+
+    # ── Polinomio como string ─────────────────
+    polinomio_str = None
+    if polinomio is not None:
+        try:
+            polinomio_str = str(sp.simplify(polinomio))
+        except Exception:
+            polinomio_str = str(polinomio)
+
+    # ── Nombres bonitos ───────────────────────
+    nombres = {
+        "vandermonde":   "Vandermonde",
+        "lagrange":      "Lagrange",
+        "newton":        "Newton Interpolante",
+        "spline_lineal": "Spline Lineal",
+        "spline_cubico": "Spline Cúbico",
+    }
+
+    resultado = {
+        "polinomio":  polinomio_str,
+        "tipo":       "spline" if es_spline else "polinomio",
+        "puntos_x":   x_puntos,
+        "puntos_y":   y_puntos,
+        "y_interp":   y_interp,
+        "errores":    errores,
+        "y_eval":     y_eval,
+    }
+
+    # ── Gráfica ───────────────────────────────
+    try:
+        graph = plot_interpolation(
+            x_puntos, y_puntos,
+            metodo=metodo,
+            polinomio=polinomio,
+            interpolador=interpolador,
+            x_eval=x_eval,
+            y_eval=y_eval,
+        )
+    except Exception as e:
+        print("ERROR GRAPH CH3:", e)
+        graph = ""
+
+    return render_template(
+        "chapter3.html",
+        resultado=resultado,
+        graph=graph,
+        metodo=metodo,
+        metodo_elegido=nombres.get(metodo, metodo),
+        n_puntos=n_puntos,
+        x_eval=x_eval,
+        rango=range(10),
+        prev_x=x_puntos,
+        prev_y=y_puntos,
     )
 
 

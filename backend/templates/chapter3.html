@@ -6,9 +6,7 @@
 
     <div class="chapter-header">
 
-        <h1>
-            Capítulo 3
-        </h1>
+        <h1>Capítulo 3</h1>
 
         <p>
             Métodos de interpolación polinómica y splines.
@@ -20,11 +18,13 @@
 
         <!-- PANEL IZQUIERDO -->
 
-        <div class="control-panel">
+        <form
+            class="control-panel"
+            method="POST"
+            action="/chapter3/resultado"
+        >
 
-            <h2>
-                Configuración
-            </h2>
+            <h2>Configuración</h2>
 
             <!-- MÉTODO -->
 
@@ -32,74 +32,86 @@
 
                 <label>Método</label>
 
-                <select>
-
-                    <option>Vandermonde</option>
-                    <option>Lagrange</option>
-                    <option>Newton Interpolante</option>
-                    <option>Spline Lineal</option>
-                    <option>Spline Cúbico</option>
-
+                <select name="metodo">
+                    <option value="vandermonde">Vandermonde</option>
+                    <option value="lagrange">Lagrange</option>
+                    <option value="newton">Newton Interpolante</option>
+                    <option value="spline_lineal">Spline Lineal</option>
+                    <option value="spline_cubico">Spline Cúbico</option>
                 </select>
 
             </div>
 
-            <!-- NÚMERO PUNTOS -->
+            <!-- NÚMERO DE PUNTOS -->
 
             <div class="input-group">
 
                 <label>Número de puntos</label>
 
-                <select>
-
-                    <option>2</option>
-                    <option>3</option>
-                    <option>4</option>
-                    <option>5</option>
-                    <option>6</option>
-                    <option>7</option>
-                    <option>8</option>
-                    <option>9</option>
-                    <option>10</option>
-
+                <select name="n_puntos" id="n-puntos">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
                 </select>
 
             </div>
 
-            <!-- TABLA PUNTOS -->
+            <!-- TABLA DE PUNTOS -->
 
             <div class="input-group">
 
-                <label>Puntos (x,y)</label>
+                <label>Puntos (x, y)</label>
 
-                <div class="matrix-placeholder">
-                    Espacio para tabla dinámica de puntos
+                <div id="puntos-header" class="matrix-grid" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+                    <span style="color: var(--accent); font-size: 0.85rem; padding: 4px 12px;">x</span>
+                    <span style="color: var(--accent); font-size: 0.85rem; padding: 4px 12px;">y</span>
+                </div>
+
+                <div id="puntos-container">
                 </div>
 
             </div>
 
-            <!-- ALMACENAMIENTO -->
+            <!-- EVALUAR EN X -->
 
             <div class="input-group">
 
-                <label>Porcentaje de almacenamiento</label>
+                <label>Evaluar en x (opcional)</label>
 
-                <select>
+                <input
+                    name="x_eval"
+                    type="number"
+                    step="any"
+                    placeholder="Ej: 2.5"
+                >
 
-                    <option>10%</option>
-                    <option>20%</option>
-                    <option>30%</option>
-                    <option>40%</option>
-
-                </select>
+                <span class="help-text">
+                    Calcula P(x) en este punto.
+                </span>
 
             </div>
 
-            <button class="solve-btn">
+            <!-- ERROR -->
+
+            {% if error %}
+            <div class="error-box">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- BOTÓN -->
+
+            <button class="solve-btn" type="submit">
                 Interpolar Datos
             </button>
 
-        </div>
+        </form>
 
         <!-- PANEL DERECHO -->
 
@@ -109,52 +121,104 @@
 
             <div class="result-card">
 
-                <h2>
-                    Polinomio Resultante
-                </h2>
+                <h2>Polinomio Resultante</h2>
 
-                <div class="equation-box">
+                <div class="analysis-box">
 
-                    P(x) = 2x³ - 5x² + x - 7
+                    {% if resultado %}
+
+                        <p>
+                            <strong>Método:</strong>
+                            {{ metodo_elegido }}
+                        </p>
+
+                        {% if resultado.polinomio %}
+
+                            <p style="margin-top: 12px;">
+                                <strong>P(x) =</strong>
+                            </p>
+
+                            <div class="equation-box">
+                                {{ resultado.polinomio }}
+                            </div>
+
+                        {% elif resultado.tipo == "spline" %}
+
+                            <p style="margin-top: 12px; color: var(--text-secondary);">
+                                Los splines no tienen una expresión polinómica única —
+                                se definen por tramos entre cada par de puntos.
+                            </p>
+
+                        {% endif %}
+
+                        {% if resultado.y_eval is not none %}
+                            <p style="margin-top: 16px;">
+                                <strong>P({{ x_eval }}) =</strong>
+                                {{ "%.8f" | format(resultado.y_eval) }}
+                            </p>
+                        {% endif %}
+
+                    {% else %}
+
+                        <p>Aún no se ha ejecutado ningún método.</p>
+
+                    {% endif %}
 
                 </div>
 
             </div>
 
-            <!-- TABLA -->
+            <!-- TABLA DE PUNTOS -->
 
             <div class="result-card">
 
-                <h2>
-                    Comparación de Error
-                </h2>
+                <h2>Puntos Ingresados</h2>
 
-                <table>
+                <div class="table-wrapper">
 
-                    <thead>
+                    <table>
 
-                        <tr>
-                            <th>Almacenamiento</th>
-                            <th>Error</th>
-                        </tr>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>x</th>
+                                <th>y</th>
+                                {% if resultado and resultado.y_interp %}
+                                <th>P(xᵢ)</th>
+                                <th>Error |y - P(x)|</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
 
-                    </thead>
+                        <tbody>
 
-                    <tbody>
+                            {% if resultado %}
 
-                        <tr>
-                            <td>10%</td>
-                            <td>0.25</td>
-                        </tr>
+                                {% for i in range(resultado.puntos_x | length) %}
+                                <tr>
+                                    <td>{{ i + 1 }}</td>
+                                    <td>{{ "%.4f" | format(resultado.puntos_x[i]) }}</td>
+                                    <td>{{ "%.4f" | format(resultado.puntos_y[i]) }}</td>
+                                    {% if resultado.y_interp %}
+                                    <td>{{ "%.6f" | format(resultado.y_interp[i]) }}</td>
+                                    <td>{{ "%.2e"  | format(resultado.errores[i])  }}</td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
 
-                        <tr>
-                            <td>20%</td>
-                            <td>0.11</td>
-                        </tr>
+                            {% else %}
 
-                    </tbody>
+                                <tr>
+                                    <td colspan="5">No hay resultados todavía.</td>
+                                </tr>
 
-                </table>
+                            {% endif %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
 
             </div>
 
@@ -162,12 +226,24 @@
 
             <div class="result-card graph-card">
 
-                <h2>
-                    Gráfica de Interpolación
-                </h2>
+                <h2>Gráfica de Interpolación</h2>
 
                 <div class="graph-placeholder">
-                    Área de gráfica
+
+                    {% if graph %}
+
+                        <img
+                            src="data:image/png;base64,{{ graph }}"
+                            alt="Gráfica de interpolación"
+                            class="graph-image"
+                        >
+
+                    {% else %}
+
+                        Área de gráfica
+
+                    {% endif %}
+
                 </div>
 
             </div>
@@ -177,5 +253,101 @@
     </div>
 
 </section>
+
+
+<style>
+
+.equation-box {
+    background: rgba(56, 189, 248, 0.05);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 1rem;
+    color: var(--accent);
+    word-break: break-all;
+    line-height: 1.6;
+}
+
+.error-box {
+    background: rgba(239, 71, 111, 0.1);
+    border: 1px solid rgba(239, 71, 111, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    color: #ef476f;
+    font-size: 0.9rem;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+#puntos-container input {
+    width: 100%;
+    box-sizing: border-box;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: white;
+    font-size: 0.9rem;
+    outline: none;
+    transition: 0.3s;
+}
+
+#puntos-container input:focus {
+    border-color: var(--accent);
+    box-shadow: 0px 0px 8px rgba(56, 189, 248, 0.2);
+}
+
+</style>
+
+
+<!-- SCRIPT PUNTOS DINÁMICOS -->
+
+<script>
+
+const nPuntosSelect   = document.getElementById("n-puntos");
+const puntosContainer = document.getElementById("puntos-container");
+
+function generarPuntos() {
+
+    const n = parseInt(nPuntosSelect.value);
+
+    puntosContainer.innerHTML = "";
+
+    puntosContainer.style.display = "grid";
+    puntosContainer.style.gridTemplateColumns = "minmax(0, 1fr) minmax(0, 1fr)";
+    puntosContainer.style.gap = "10px";
+    puntosContainer.style.marginTop = "10px";
+
+    for (let i = 0; i < n; i++) {
+
+        puntosContainer.innerHTML += `
+            <input
+                name="x${i}"
+                type="number"
+                step="any"
+                placeholder="x${i + 1}"
+                required
+            >
+            <input
+                name="y${i}"
+                type="number"
+                step="any"
+                placeholder="y${i + 1}"
+                required
+            >
+        `;
+    }
+}
+
+nPuntosSelect.addEventListener("change", generarPuntos);
+
+generarPuntos();
+
+</script>
 
 {% endblock %}
