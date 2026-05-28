@@ -17,6 +17,110 @@ def _fig_to_base64(fig) -> str:
     return encoded
 
 
+# ─────────────────────────────────────────────────────────────────────
+# CAPÍTULO 1 — Raíces
+# ─────────────────────────────────────────────────────────────────────
+
+def plot_root_finding(df, f_expr: str, metodo: str, raiz: float) -> str:
+    """
+    Gráfica para métodos de búsqueda de raíces (Capítulo 1).
+
+    df      : pandas DataFrame con columnas Iter, x_n, f(x), E_Abs, E_Rel, E_Cond
+    f_expr  : string con la expresión de f (ej: "x**3 - x - 2")
+    metodo  : clave del método ("biseccion", "newton", etc.)
+    raiz    : valor de la raíz aproximada encontrada
+
+    Retorna imagen en base64.
+    """
+    nombres = {
+        "biseccion":        "Bisección",
+        "regla_falsa":      "Regla Falsa",
+        "punto_fijo":       "Punto Fijo",
+        "newton":           "Newton-Raphson",
+        "secante":          "Secante",
+        "raices_multiples": "Raíces Múltiples",
+    }
+    titulo = nombres.get(metodo, metodo)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+    fig.patch.set_facecolor("#fafafa")
+
+    for ax in (ax1, ax2):
+        ax.set_facecolor("#fafafa")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    # ── Panel izquierdo: f(x) y la raíz ──────────────────────────────
+    try:
+        import math
+        margen  = max(abs(raiz) * 0.6, 3.0)
+        x_vals  = np.linspace(raiz - margen, raiz + margen, 500)
+        y_vals  = []
+        for xi in x_vals:
+            try:
+                yi = eval(f_expr, {"x": xi, "math": math,
+                                   "sin": math.sin, "cos": math.cos,
+                                   "tan": math.tan, "log": math.log,
+                                   "exp": math.exp, "sqrt": math.sqrt,
+                                   "__builtins__": {}})
+                y_vals.append(float(yi))
+            except Exception:
+                y_vals.append(float("nan"))
+
+        y_vals = np.array(y_vals)
+
+        # Limitar rango Y para que la raíz sea visible
+        y_finite = y_vals[np.isfinite(y_vals)]
+        if y_finite.size > 0:
+            yq_lo, yq_hi = np.percentile(y_finite, [5, 95])
+            ypad = max(abs(yq_hi - yq_lo) * 0.3, 1.0)
+            ax1.set_ylim(yq_lo - ypad, yq_hi + ypad)
+
+        ax1.plot(x_vals, y_vals, color="#4361ee", linewidth=2,
+                 label=f"f(x) = {f_expr}")
+        ax1.axhline(0,    color="#555",    linewidth=0.8, linestyle="--")
+        ax1.axvline(raiz, color="#ef476f", linewidth=1.5, linestyle="--",
+                    label=f"Raíz ≈ {raiz:.6f}")
+        ax1.scatter([raiz], [0], color="#ef476f", zorder=5, s=60)
+        ax1.set_xlabel("x",    fontsize=11)
+        ax1.set_ylabel("f(x)", fontsize=11)
+        ax1.set_title(f"{titulo} — Función y raíz", fontsize=12, fontweight="bold")
+        ax1.legend(fontsize=9, framealpha=0.9)
+        ax1.grid(True, linestyle="--", alpha=0.3)
+
+    except Exception as exc:
+        ax1.text(0.5, 0.5, f"No se pudo graficar f(x)\n{exc}",
+                 ha="center", va="center", transform=ax1.transAxes,
+                 fontsize=9, color="#888")
+
+    # ── Panel derecho: error absoluto por iteración ───────────────────
+    iters  = df["Iter"].tolist()
+    errors = df["E_Abs"].tolist()
+    positive = [(i, e) for i, e in zip(iters, errors) if e > 0]
+
+    if positive:
+        xi, yi = zip(*positive)
+        ax2.semilogy(xi, yi, "o-", color="#06d6a0",
+                     linewidth=2, markersize=4, alpha=0.85,
+                     label="Error absoluto")
+        ax2.set_xlabel("Iteración", fontsize=11)
+        ax2.set_ylabel("Error absoluto (log)", fontsize=11)
+        ax2.set_title("Convergencia del error", fontsize=12, fontweight="bold")
+        ax2.legend(fontsize=9, framealpha=0.9)
+        ax2.grid(True, which="both", linestyle="--", alpha=0.3)
+    else:
+        ax2.text(0.5, 0.5, "Sin datos de error",
+                 ha="center", va="center", transform=ax2.transAxes,
+                 fontsize=9, color="#888")
+
+    fig.tight_layout()
+    return _fig_to_base64(fig)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# CAPÍTULO 2 — Sistemas lineales iterativos
+# ─────────────────────────────────────────────────────────────────────
+
 def plot_error_comparison(results: dict) -> str:
     """
     Gráfica comparativa de error absoluto vs iteración para
@@ -64,7 +168,7 @@ def plot_error_comparison(results: dict) -> str:
         plt.close(fig)
         return ""
 
-    # Línea de tolerancia (si viene en algún resultado)
+    # Línea de tolerancia
     tol = None
     for key in colors:
         if key in results and "iterations" in results[key]:
